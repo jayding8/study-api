@@ -8,7 +8,7 @@
 
 return [
     // 消息通知地址
-    'webhook'          => env('WEBHOOK', 'https://oapi.dingtalk.com/robot/send?access_token=9038692c3011861871e94a056faf2fc9ca408ffd861f0131b9f1092d24a5e8e5'),
+    'webhook'          => env('WEBHOOK', 'https://oapi.dingtalk.com/robot/send?access_token=fee3c708931339de15502e872898172df8f64344e139165403f3ee2cec883578'),
 
     // 同花顺数据中心 http://data.10jqka.com.cn/ipo/bond/
     'source_data'      => [
