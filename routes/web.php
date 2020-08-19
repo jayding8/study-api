@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 // 用户 路由
 Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
+    Route::post('register', 'UserController@register');
     Route::post('login', 'UserController@login');
 });
 
