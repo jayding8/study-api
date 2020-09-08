@@ -39,7 +39,7 @@ class LogsController extends Controller
         $insert = array_merge($insert, $request->all());
         $log = Logs::create($insert);
 
-        return Response::success($log->id);
+        return Response::success($log);
     }
 
     public function list()
