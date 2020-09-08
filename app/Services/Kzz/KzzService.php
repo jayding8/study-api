@@ -3,6 +3,7 @@
 namespace App\Services\Kzz;
 
 use App\Contracts\KzzContract;
+use App\Models\Logs\Logs;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
@@ -85,13 +86,15 @@ class KzzService implements KzzContract
      * 2、持有转债跌出 20% 后直接卖出
      * 3、待定
      */
-    public function filterLowRiskData($data)
+    public function filterLowRiskData($data, $is_notice)
     {
         // 按照 双低 asc排序
         $data = array_values(Arr::sort($data['rows'], function ($val) {
             return $val['cell']['dblow'];
         }));
-
+        if (!$is_notice) {
+            return array_column($data, 'cell');
+        }
         // 获取可转债总数,取 前10% 作为舱底
         $count = count($data);
         $buy   = intval($count / 10);
@@ -111,7 +114,7 @@ class KzzService implements KzzContract
             }
 
             // 标注持仓可转债
-            if (in_array($data[$i]['id'],$this->owner)) {
+            if (in_array($data[$i]['id'], $this->owner)) {
                 $owner_bond[] = $data[$i]['cell'];
             }
 
@@ -165,14 +168,9 @@ class KzzService implements KzzContract
                 $data = [
                     "msgtype" => "text",
                     "text"    => [
-                        "content" => $this->getText($data_effective),
+                        "content" => $data_effective['text'],
                     ],
-                    "at"      => [
-                        "atMobiles" => [
-                            "15251895379",
-                        ],
-                        "isAtAll"   => false
-                    ]
+                    "at"      => $data_effective['at']
                 ];
                 break;
             default:
@@ -213,9 +211,8 @@ class KzzService implements KzzContract
     /**
      * 获取 text内容
      */
-    private function getText($data_effective)
+    public function getlowRiskStrategyData($data_effective)
     {
-
         $return          = $this->getStrJsl($data_effective['return']);
         $about_to_expire = $this->getStrJsl($data_effective['about_to_expire']);
         $owner_bond      = $this->getStrJsl($data_effective['owner_bond']);
@@ -234,7 +231,41 @@ class KzzService implements KzzContract
             "剩余规模大于10亿: " . PHP_EOL .
             $curr_iss_amt;
 
-        return $text;
+        $at = [
+            "atMobiles" => ["15251895379"],
+            "isAtAll"   => false
+        ];
+        return ['text' => $text, 'at' => $at];
+    }
+
+    /**
+     * 获取 text内容
+     */
+    public function getForceData($data_effective)
+    {
+        if (!isset($data_effective['today_sale']) || empty($data_effective['today_sale'])) {
+            return false;
+        }
+
+        $logs = [];
+        foreach ($data_effective['today_sale'] as $v) {
+            $log  = Logs::where(function ($query) use ($v) {
+                $query->where('type', $v['bond_code']);
+                $query->orWhere('type_name', $v['bond_name']);
+            })->with('user')->get()->toArray();
+            $logs = array_merge($logs, $log);
+        }
+
+        $text = "【转债快报】您有中签转债今日上市,请及时关注" . PHP_EOL;
+
+        $at = [
+            "atMobiles" => Arr::pluck($logs, 'user.phone'),
+            "isAtAll"   => false
+        ];
+        if (!$at['atMobiles']) {
+            return false;
+        }
+        return ['text' => $text, 'at' => $at];
     }
 
     /**

@@ -36,7 +36,18 @@ class KzzController extends Controller
             logger($return);
             return Response::error($return['errcode'], $return['errmsg']);
         }
-        return Response::success($return);
+
+        // 检查是否有用户拥有当前转债
+        $notice_data = $this->kzzContract->getForceData($data_effective);
+        if ($notice_data) {
+            $return = $this->kzzContract->sendNotice($notice_data, 'text');
+            if ($return['errcode']) {
+                logger($return);
+                return Response::error($return['errcode'], $return['errmsg']);
+            }
+        }
+
+        return Response::success($notice_data);
     }
 
     /**
@@ -56,18 +67,21 @@ class KzzController extends Controller
         // 获取第三方可转债数据
         $data = $this->kzzContract->getSourceData('jsl', 'post', $params, $headers);
 
+        $is_notice = $params['notice_only'] ?? 0;
+
         // 过滤返回值
-        $data_effective = $this->kzzContract->filterLowRiskData($data);
+        $data_effective = $this->kzzContract->filterLowRiskData($data, intval($is_notice));
 
-        return Response::success($data_effective);
-
-        // 发送数据
-        $return = $this->kzzContract->sendNotice($data_effective,'text');
-        if ($return['errcode']) {
-            logger($return);
-            return Response::error($return['errcode'], $return['errmsg']);
+        if ($is_notice) {
+            // 组装数据
+            $notice_data = $this->kzzContract->getlowRiskStrategyData($data_effective);
+            // 发送数据
+            $return = $this->kzzContract->sendNotice($notice_data, 'text');
+            if ($return['errcode']) {
+                logger($return);
+                return Response::error($return['errcode'], $return['errmsg']);
+            }
         }
-
         return Response::success($data_effective);
     }
 }
