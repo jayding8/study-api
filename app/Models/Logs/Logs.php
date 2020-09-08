@@ -2,6 +2,7 @@
 
 namespace App\Models\Logs;
 
+use App\Models\User\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -23,4 +24,9 @@ class Logs extends Model
     ];
 
     protected $hidden = ['delete_at'];
+
+    public function user()
+    {
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
 }
