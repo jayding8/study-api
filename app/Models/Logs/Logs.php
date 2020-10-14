@@ -29,4 +29,17 @@ class Logs extends Model
     {
         return $this->hasOne(User::class, 'id', 'user_id');
     }
+
+    public function scopeCondition($query, $params)
+    {
+        if (isset($params['op_id'])) {
+            $query->where('op_id', $params['op_id']);
+        }
+        return $query;
+    }
+
+    public function scopeSelf($query)
+    {
+        return $query->where('user_id', auth()->user()->id);
+    }
 }
