@@ -19,17 +19,15 @@ Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
     Route::post('register', 'UserController@register');
     // 用户登录
     Route::post('login', 'UserController@login');
-    Route::group(['middleware' => 'auth'],function (){
-        // 自选
-        Route::post('login', 'UserController@selfOptional');
-    });
 });
 
 // 日志 路由
 Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
     Route::group(['middleware' => 'auth'], function () {
-        Route::post('log', 'LogsController@create');    // 新增操作记录
-        Route::get('logs', 'LogsController@ownList');      // 获取日志列表
+        // 新增操作记录
+        Route::post('log', 'LogsController@create');
+        // 删除日志记录
+        Route::delete('log', 'LogsController@delete');
     });
 });
 

@@ -29,7 +29,7 @@ class LogsController extends Controller
         //验证
         $validator = Validator::make($request->all(), $rule, $message);
         if ($validator->fails()) {
-            return response()->error(10000, $validator->errors()->first());
+            return response()->error(1000, $validator->errors()->first());
         }
 //        dd(auth()->user());
         $insert = [
@@ -37,15 +37,31 @@ class LogsController extends Controller
             'user_name' => auth()->user()->name,
         ];
         $insert = array_merge($insert, $request->all());
-        $log = Logs::create($insert);
+        $log    = Logs::create($insert);
 
         return Response::success($log);
     }
 
-    public function list()
+    public function delete(Request $request)
     {
-        $param = [
-            ''
+        $rule    = [
+            'op_id' => 'required',
+            'types' => 'required',
         ];
+        $message = [
+            'op_id.required' => 'Require op_id Param',
+            'type.required'  => 'Require type Param',
+        ];
+        //验证
+        $validator = Validator::make($request->all(), $rule, $message);
+        if ($validator->fails()) {
+            return response()->error(1000, $validator->errors()->first());
+        }
+        $delete_data = [
+            'op_id'   => $request->get('op_id'),
+            'types'   => $request->get('types'),
+        ];
+        Logs::condition($delete_data)->self()->delete();
+        return response()->success($request->get('type_names') ?? 'success');
     }
 }

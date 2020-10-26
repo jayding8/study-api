@@ -92,8 +92,27 @@ class KzzService implements KzzContract
         $data = array_values(Arr::sort($data['rows'], function ($val) {
             return $val['cell']['dblow'];
         }));
-        if (!$is_notice) {
-            return array_column($data, 'cell');
+        if ( !$is_notice) {
+            $data = array_column($data, 'cell');
+            // 如果已登录,判断当前用户是否持有
+            if (auth()->check()) {
+                // 自选
+                $user_optional = Logs::condition(['op_id' => 2])->self()->pluck('type')->toArray();
+                // 黑名单
+                $user_black = Logs::condition(['op_id' => 3])->self()->pluck('type')->toArray();
+                foreach ($data as &$item) {
+                    $item['user_optional'] = 0;
+                    $item['user_black'] = 0;
+                    if (in_array($item['bond_id'], $user_optional)) {
+                        $item['user_optional'] = 1;
+                    }
+                    if (in_array($item['bond_id'], $user_black)) {
+                        $item['user_black'] = 1;
+                    }
+                }
+//            Response::error('1001', 'Auth Faile');
+            }
+            return $data;
         }
         // 获取可转债总数,取 前10% 作为舱底
         $count = count($data);

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\User\LoginLog;
 use App\Models\User\User;
 use Closure;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Auth;
 
 class Authenticate
@@ -21,6 +22,10 @@ class Authenticate
             // 还要判断token是否过期,后期再加
             $user_info = User::find($login->user_id);
             Auth::login($user_info);
+        } else {
+            if (!auth()->check()) {
+                return response()->error('1001', 'Auth Faile');
+            }
         }
         return $next($request);
     }

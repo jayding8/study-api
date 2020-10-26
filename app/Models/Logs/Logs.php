@@ -35,6 +35,14 @@ class Logs extends Model
         if (isset($params['op_id'])) {
             $query->where('op_id', $params['op_id']);
         }
+        if (isset($params['types'])) {
+            if (is_array($params['types'])) {
+                $query->whereIn('type', $params['types']);
+            } else {
+                $query->where('type', $params['types']);
+            }
+        }
+
         return $query;
     }
 
