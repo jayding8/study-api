@@ -38,7 +38,7 @@ class notice extends Command
      */
     public function handle()
     {
-        Http::get('http://ding-api.study.com/kzz/kzz')->throw()->json();
+        Http::get(config('app.url') . 'kzz/kzz')->throw()->json();
 //        Http::get('http://ding-api.study.com/kzz/lowRiskKzz?notice_only=1&is_search=Y&rp=50&listed=Y&btype=C')->throw()->json();
     }
 }
