@@ -92,7 +92,7 @@ class KzzService implements KzzContract
         $data = array_values(Arr::sort($data['rows'], function ($val) {
             return $val['cell']['dblow'];
         }));
-        if ( !$is_notice) {
+        if (!$is_notice) {
             $data = array_column($data, 'cell');
             // 如果已登录,判断当前用户是否持有
             if (auth()->check()) {
@@ -102,7 +102,7 @@ class KzzService implements KzzContract
                 $user_black = Logs::condition(['op_id' => 3])->self()->pluck('type')->toArray();
                 foreach ($data as &$item) {
                     $item['user_optional'] = 0;
-                    $item['user_black'] = 0;
+                    $item['user_black']    = 0;
                     if (in_array($item['bond_id'], $user_optional)) {
                         $item['user_optional'] = 1;
                     }
@@ -303,7 +303,7 @@ class KzzService implements KzzContract
                     $return .= $v['bond_name'] . '&nbsp;' . $v['sub_code'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['sub_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['sign_date'], 'm-d') . '&nbsp;  
             ';
                 } elseif ($type == 'sale') {
-                    $return .= $v['bond_name'] . '&nbsp;' . $v['bond_code'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['code'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['listing_date']) . '&nbsp;  
+                    $return .= $v['bond_name'] . '&nbsp;' . $v['bond_code'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['code'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['listing_date'], 'm-d') . '&nbsp;  
             ';
                 }
 
