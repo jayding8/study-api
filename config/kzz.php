@@ -27,8 +27,9 @@ return [
 
     // 操作类型备份
     'op'               => [
-        [ 'op_id' => 1, 'op_name'=> '中签'],
-        [ 'op_id' => 2, 'op_name'=> '自选'],
-        [ 'op_id' => 3, 'op_name'=> '黑名单'],
+        ['op_id' => 1, 'op_name' => '中签', 'key' => 'user_codes'],
+        ['op_id' => 2, 'op_name' => '自选', 'key' => 'user_optional'],
+        ['op_id' => 3, 'op_name' => '黑名单', 'key' => 'user_black'],
+        ['op_id' => 4, 'op_name' => '预警', 'key' => 'user_warning'],
     ]
 ];

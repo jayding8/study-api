@@ -28,6 +28,8 @@ Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
         Route::post('log', 'LogsController@create');
         // 删除日志记录
         Route::delete('log', 'LogsController@delete');
+        // 获取日志记录
+        Route::get('log', 'LogsController@logs');
     });
 });
 

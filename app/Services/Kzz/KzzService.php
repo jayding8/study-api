@@ -268,7 +268,7 @@ class KzzService implements KzzContract
 
         $logs = [];
         foreach ($data_effective['today_sale'] as $v) {
-            $log  = Logs::where(function ($query) use ($v) {
+            $log  = Logs::condition(['op_id' => 1])->where(function ($query) use ($v) {
                 $query->where('type', $v['bond_code']);
                 $query->orWhere('type_name', $v['bond_name']);
             })->with('user')->get()->toArray();

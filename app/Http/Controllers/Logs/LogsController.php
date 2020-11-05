@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Logs;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Logs\Logs;
@@ -58,10 +59,26 @@ class LogsController extends Controller
             return response()->error(1000, $validator->errors()->first());
         }
         $delete_data = [
-            'op_id'   => $request->get('op_id'),
-            'types'   => $request->get('types'),
+            'op_id' => $request->get('op_id'),
+            'types' => $request->get('types'),
         ];
         Logs::condition($delete_data)->self()->delete();
         return response()->success($request->get('type_names') ?? 'success');
+    }
+
+    public function logs()
+    {
+        $op_types = config('kzz.op');
+        if ( empty($op_types)){
+            return response()->error(1001, 'Missing OP Config');
+        }
+        $ops = Arr::pluck($op_types,'key','op_id');
+
+        $logs     = Logs::self()->get();
+        $return = Arr::pluck($op_types,'','key');
+        foreach ($logs as $log) {
+            $return[$ops[$log->op_id]][] = $log;
+        }
+        return response()->success($return);
     }
 }
