@@ -3,29 +3,38 @@
 namespace App\Http\Controllers\Logs;
 
 use App\Http\Controllers\Controller;
+use App\Models\Logs\Logs;
+use App\Models\User\UserWarning;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Logs\Logs;
 
 class LogsController extends Controller
 {
+    private $op_types;
+
+    public function __construct()
+    {
+        $this->op_types = config('kzz.op');
+    }
+
     public function create(Request $request)
     {
         $rule    = [
-            'op_id'     => 'required',
-            'op_name'   => 'required|max:255',
-            'type'      => 'required',
-            'type_name' => 'required|max:255',
+            'op_id'     => 'required_without:op_key',
+            'op_key'    => 'required_without:op_id',
+            'type'      => 'required|numeric',
+            'type_name' => 'required|max:5',
         ];
         $message = [
-            'op_id.required'     => 'Require op_id Param',
-            'op_name.required'   => 'Require op_name Param',
-            'op_name.max'        => 'op_name Is Too Long',
-            'type.required'      => 'Require type Param',
-            'type_name.required' => 'Require type_name Param',
-            'type_name.max'      => 'type_name Is Too Long',
+            'op_id.required_without'  => 'Require op_id or op_key param',
+            'op_key.required_without' => 'Require op_id or op_key param',
+            'type.required'           => 'Require type Param',
+            'type.numeric'            => 'Error type type',
+            'type_name.required'      => 'Require type_name Param',
+            'type_name.max'           => 'type_name Is Too Long',
         ];
         //验证
         $validator = Validator::make($request->all(), $rule, $message);
@@ -37,8 +46,19 @@ class LogsController extends Controller
             'user_id'   => auth()->user()->id,
             'user_name' => auth()->user()->name,
         ];
+        if ($request->has('op_key')) {
+            $op_key = $request->get('op_key');
+            $op     = Arr::where($this->op_types, function ($val) use ($op_key) {
+                return $val['key'] == $op_key && $val;
+            });
+            $insert = array_merge($insert, array_values($op)[0]);
+        }
         $insert = array_merge($insert, $request->all());
-        $log    = Logs::create($insert);
+        $log    = Logs::updateOrCreate(Arr::only($insert, ['user_id', 'op_id', 'type']), $insert);
+        if (isset($op_key) && $op_key == 'user_warning') {
+            $insert['or_id'] = $log->id;
+            UserWarning::updateOrCreate(Arr::only($insert, ['user_id', 'type']), Arr::only($insert, ['or_id', 'user_id', 'user_name', 'type', 'type_name', 'up', 'down', 'percent']));
+        }
 
         return Response::success($log);
     }
@@ -58,26 +78,26 @@ class LogsController extends Controller
         if ($validator->fails()) {
             return response()->error(1000, $validator->errors()->first());
         }
+        $op_id       = $request->get('op_id');
         $delete_data = [
-            'op_id' => $request->get('op_id'),
+            'op_id' => $op_id,
             'types' => $request->get('types'),
         ];
         Logs::condition($delete_data)->self()->delete();
+        if ($op_id == '4') {
+            UserWarning::condition(['types' => $request->get('types')])->self()->delete();
+        }
         return response()->success($request->get('type_names') ?? 'success');
     }
 
     public function logs()
     {
-        $op_types = config('kzz.op');
-        if ( empty($op_types)){
-            return response()->error(1001, 'Missing OP Config');
-        }
-        $ops = Arr::pluck($op_types,'key','op_id');
-
-        $logs     = Logs::self()->get();
-        $return = Arr::pluck($op_types,'','key');
+        $ops    = Arr::pluck($this->op_types, 'key', 'op_id');
+        $logs   = Logs::self()->with('warning')->get()->toArray();
+        $return = Arr::pluck($this->op_types, '', 'key');
         foreach ($logs as $log) {
-            $return[$ops[$log->op_id]][] = $log;
+            $log['created_at']             = change_date_format($log['created_at'], 'Y-m-d', 1);
+            $return[$ops[$log['op_id']]][] = $log;
         }
         return response()->success($return);
     }

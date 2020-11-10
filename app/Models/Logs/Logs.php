@@ -3,6 +3,7 @@
 namespace App\Models\Logs;
 
 use App\Models\User\User;
+use App\Models\User\UserWarning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -28,6 +29,11 @@ class Logs extends Model
     public function user()
     {
         return $this->hasOne(User::class, 'id', 'user_id');
+    }
+
+    public function warning()
+    {
+        return $this->belongsTo(UserWarning::class, 'id','or_id');
     }
 
     public function scopeCondition($query, $params)
