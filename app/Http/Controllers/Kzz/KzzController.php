@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Kzz;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use App\Contracts\KzzContract;
@@ -14,40 +15,6 @@ class KzzController extends Controller
     public function __construct(KzzContract $kzzContract)
     {
         $this->kzzContract = $kzzContract;
-    }
-
-    /**
-     * 可申请、即将申请、新上市、即将上市 可转债
-     */
-    public function notice()
-    {
-        // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('ths');
-
-        if (!$data)
-            return false;
-
-        // 过滤返回值,只取待申请,待上市数据
-        $data_effective = $this->kzzContract->filterData($data);
-
-        // 发送数据
-        $return = $this->kzzContract->sendNotice($data_effective);
-        if ($return['errcode']) {
-            logger($return);
-            return Response::error($return['errcode'], $return['errmsg']);
-        }
-
-        // 检查是否有用户拥有当前转债
-        $notice_data = $this->kzzContract->getForceData($data_effective);
-        if ($notice_data) {
-            $return = $this->kzzContract->sendNotice($notice_data, 'text');
-            if ($return['errcode']) {
-                logger($return);
-                return Response::error($return['errcode'], $return['errmsg']);
-            }
-        }
-
-        return Response::success($notice_data);
     }
 
     /**
@@ -83,6 +50,27 @@ class KzzController extends Controller
             }
         }
         return Response::success($data_effective);
+    }
+
+    public function strategy()
+    {
+        $params  = request()->all();
+        $headers = ['cookie' => config('kzz.header_auth')];
+
+        // 获取第三方可转债数据
+        $data = $this->kzzContract->getSourceData('jsl', 'post', $params, $headers);
+
+        $is_notice = $params['notice_only'] ?? 0;
+
+        // 过滤返回值
+        $data_effective = $this->kzzContract->filterLowRiskData($data, intval($is_notice));
+        $return         = [];
+        foreach ($data_effective as $v) {
+            if ($v['price'] + 1 < $v['convert_value'] && is_numeric($v['convert_cd'])) {
+                $return[] = Arr::only($v, ['bond_id', 'bond_nm', 'price', 'convert_value']);
+            }
+        }
+        return Response::success($return);
     }
 }
 

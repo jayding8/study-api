@@ -35,7 +35,6 @@ Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
 
 // 可转债 路由
 Route::group(['prefix' => 'kzz', 'namespace' => 'Kzz'], function () {
-    Route::get('kzz', 'KzzController@notice');
     Route::get('lowRiskKzz', 'KzzController@lowRiskStrategy');
     Route::get('strategy', 'KzzController@strategy');
 });

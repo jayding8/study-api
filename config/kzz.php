@@ -12,8 +12,9 @@ return [
 
     // 同花顺数据中心 http://data.10jqka.com.cn/ipo/bond/
     'source_data'      => [
-        'ths' => env('KZZ_SOURCE_DATA', 'http://data.10jqka.com.cn/ipo/kzz/'),
-        'jsl' => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=' . intval(microtime(1) * 1000)),
+        'ths'        => env('KZZ_SOURCE_DATA', 'http://data.10jqka.com.cn/ipo/kzz/'),
+        'jsl'        => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=' . intval(microtime(1) * 1000)),
+        'jsl-coming' => env('JSL_COMING_DATA', 'https://www.jisilu.cn/webapi/cb/pre/?history=N'),
     ],
 
     // 默认索引图

@@ -49,22 +49,22 @@ class KzzService implements KzzContract
     }
 
     /**
-     * 同花顺返回值处理
+     * 可申请、即将申请、新上市、即将上市 可转债数据结构处理
      */
     public function filterData($data)
     {
         $today_buy = $feature_buy = $today_sale = $feature_sale = [];
-        foreach ($data['list'] as $v) {
+        foreach ($data as $v) {
             // 待申购可转债
-            if ($v['sub_date'] > $this->date) {
+            if ($v['apply_date'] > $this->date) {
                 $feature_buy[] = $v;
-            } elseif ($v['sub_date'] == $this->date) {
+            } elseif ($v['apply_date'] == $this->date) {
                 $today_buy[] = $v;
             }
             // 待上市可转债
-            if ($v['listing_date'] > $this->date) {
+            if ($v['list_date'] > $this->date) {
                 $feature_sale[] = $v;
-            } elseif ($v['listing_date'] == $this->date) {
+            } elseif ($v['list_date'] == $this->date) {
                 $today_sale[] = $v;
             }
         }
@@ -266,9 +266,9 @@ class KzzService implements KzzContract
             return false;
         }
 
-        $logs = [];
+        $logs = $owner = [];
         foreach ($data_effective['today_sale'] as $v) {
-            $log  = Logs::condition(['op_id' => 1])->where(function ($query) use ($v) {
+            $log = Logs::condition(['op_id' => 1])->where(function ($query) use ($v) {
                 $query->where('type', $v['bond_code']);
                 $query->orWhere('type_name', $v['bond_name']);
             })->with('user')->get()->toArray();
