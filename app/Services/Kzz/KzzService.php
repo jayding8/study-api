@@ -268,7 +268,7 @@ class KzzService implements KzzContract
 
         $logs = $owner = [];
         foreach ($data_effective['today_sale'] as $v) {
-            $log = Logs::condition(['op_id' => 1])->where(function ($query) use ($v) {
+            $log  = Logs::condition(['op_id' => 1])->where(function ($query) use ($v) {
                 $query->where('type', $v['bond_id']);
                 $query->orWhere('type_name', $v['bond_nm']);
             })->with('user')->get()->toArray();
@@ -300,7 +300,7 @@ class KzzService implements KzzContract
         if (!empty($arr)) {
             foreach ($arr as $v) {
                 if ($type == 'buy') {
-                    $return .= $v['bond_nm'] . '&nbsp;' . $v['apply_cd'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['apply_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['jsl_advise_text'] . '&nbsp;  
+                    $return .= $v['bond_nm'] . '&nbsp;' . $v['apply_cd'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['apply_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['jsl_advise_text'] ?: '暂无' . '&nbsp;  
             ';
                 } elseif ($type == 'sale') {
                     $return .= $v['bond_nm'] . '&nbsp;' . $v['bond_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['stock_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['list_date'], 'm-d') . '&nbsp;  
