@@ -293,17 +293,17 @@ class KzzService implements KzzContract
     private function getStr($arr, $type = 'buy')
     {
         $return = '';
-        $buy    = '债券名称&nbsp;申购代码&nbsp;申购日期&nbsp;中签公布&nbsp;   
+        $buy    = '债券名称&nbsp;申购代码&nbsp;申购日期&nbsp;申购建议&nbsp;   
         ';
         $sale   = '债券名称&nbsp;债券代码&nbsp;正股代码&nbsp;上市日期&nbsp;   
         ';
         if (!empty($arr)) {
             foreach ($arr as $v) {
                 if ($type == 'buy') {
-                    $return .= $v['bond_name'] . '&nbsp;' . $v['sub_code'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['sub_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['sign_date'], 'm-d') . '&nbsp;  
+                    $return .= $v['bond_nm'] . '&nbsp;' . $v['apply_cd'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['apply_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['jsl_advise_text'] . '&nbsp;  
             ';
                 } elseif ($type == 'sale') {
-                    $return .= $v['bond_name'] . '&nbsp;' . $v['bond_code'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['code'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['listing_date'], 'm-d') . '&nbsp;  
+                    $return .= $v['bond_nm'] . '&nbsp;' . $v['bond_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['stock_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['list_date'], 'm-d') . '&nbsp;  
             ';
                 }
 
