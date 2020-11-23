@@ -17,8 +17,6 @@ class KzzService implements KzzContract
     // 默认索引图
     public $default_indexpic;
 
-    public $owner;
-
     public $date;
 
     public function __construct()
@@ -31,7 +29,6 @@ class KzzService implements KzzContract
         $this->webhook          = config('kzz.webhook');
         $this->source_data      = config('kzz.source_data');
         $this->default_indexpic = config('kzz.default_indexpic');
-        $this->owner            = config('kzz.owner');
         $this->date             = Carbon::now()->toDateString();
 
     }
@@ -118,6 +115,8 @@ class KzzService implements KzzContract
         $count = count($data);
         $buy   = intval($count / 10);
         $sale  = intval($count / 5);
+        // 获取我自己的自选列表
+        $owner = Logs::condition(['op_id' => 2,'user_id' => 1])->pluck('type')->toArray();
 
         $return          = [];
         $about_to_expire = $owner_bond = $about_to_sale = $curr_iss_amt = [];
@@ -133,7 +132,7 @@ class KzzService implements KzzContract
             }
 
             // 标注持仓可转债
-            if (in_array($data[$i]['id'], $this->owner)) {
+            if (in_array($data[$i]['id'], $owner)) {
                 $owner_bond[] = $data[$i]['cell'];
             }
 
@@ -142,15 +141,15 @@ class KzzService implements KzzContract
 
         for ($i = 0; $i < $sale; $i++) {
             // 标注持仓可转债
-            $key = array_search($data[$i]['id'], $this->owner);
+            $key = array_search($data[$i]['id'], $owner);
             if (is_numeric($key)) {
-                unset($this->owner[$key]);
+                unset($owner[$key]);
             }
         }
 
         // 获取 跌出前20%的 已持有 可转债
         foreach ($data as $v) {
-            if (in_array($v['id'], $this->owner)) {
+            if (in_array($v['id'], $owner)) {
                 $about_to_sale[] = $v['cell'];
             }
         }

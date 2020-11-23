@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use App\Contracts\KzzContract;
 use Illuminate\Console\Command;
 
-class notice extends Command
+class Notice extends Command
 {
     /**
      * The name and signature of the console command.

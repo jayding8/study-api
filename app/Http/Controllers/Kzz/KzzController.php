@@ -39,16 +39,6 @@ class KzzController extends Controller
         // 过滤返回值
         $data_effective = $this->kzzContract->filterLowRiskData($data, intval($is_notice));
 
-        if ($is_notice) {
-            // 组装数据
-            $notice_data = $this->kzzContract->getlowRiskStrategyData($data_effective);
-            // 发送数据
-            $return = $this->kzzContract->sendNotice($notice_data, 'text');
-            if ($return['errcode']) {
-                logger($return);
-                return Response::error($return['errcode'], $return['errmsg']);
-            }
-        }
         return Response::success($data_effective);
     }
 

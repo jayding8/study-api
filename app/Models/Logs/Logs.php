@@ -33,7 +33,7 @@ class Logs extends Model
 
     public function warning()
     {
-        return $this->belongsTo(UserWarning::class, 'id','or_id');
+        return $this->belongsTo(UserWarning::class, 'id', 'or_id');
     }
 
     public function scopeCondition($query, $params)
@@ -48,7 +48,9 @@ class Logs extends Model
                 $query->where('type', $params['types']);
             }
         }
-
+        if (isset($params['user_id'])) {
+            $query->where('user_id', $params['user_id']);
+        }
         return $query;
     }
 
