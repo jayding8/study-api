@@ -43,7 +43,7 @@ class Notice extends Command
     public function handle()
     {
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl-coming');
+        $data = $this->kzzContract->getSourceData('jsl_coming');
         if (!$data || !isset($data['data'])) {
             logger('notice-getData:', ['jsl source data error(coming)']);
             $this->error('jsl source data error(coming)');

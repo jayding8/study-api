@@ -86,11 +86,10 @@ class KzzService implements KzzContract
     public function filterLowRiskData($data, $is_notice)
     {
         // 按照 双低 asc排序
-        $data = array_values(Arr::sort($data['rows'], function ($val) {
-            return $val['cell']['dblow'];
+        $data = array_values(Arr::sort($data['data'], function ($val) {
+            return $val['dblow'];
         }));
         if (!$is_notice) {
-            $data = array_column($data, 'cell');
             // 如果已登录,判断当前用户是否持有
             if (auth()->check()) {
                 // 自选
@@ -116,32 +115,32 @@ class KzzService implements KzzContract
         $buy   = intval($count / 10);
         $sale  = intval($count / 5);
         // 获取我自己的自选列表
-        $owner = Logs::condition(['op_id' => 2,'user_id' => 1])->pluck('type')->toArray();
+        $owner = Logs::condition(['op_id' => 2, 'user_id' => 1])->pluck('type')->toArray();
 
         $return          = [];
         $about_to_expire = $owner_bond = $about_to_sale = $curr_iss_amt = [];
         for ($i = 0; $i < $buy; $i++) {
             // 标注 1年内到期 的可转债
-            if (strtotime($data[$i]['cell']['maturity_dt']) < time() + 365 * 24 * 3600) {
-                $about_to_expire[] = $data[$i]['cell'];
+            if (strtotime($data[$i]['maturity_dt']) < time() + 365 * 24 * 3600) {
+                $about_to_expire[] = $data[$i];
             }
-
             // 剩余规模大于10亿
-            if (strtotime($data[$i]['cell']['curr_iss_amt']) > 10) {
-                $curr_iss_amt[] = $data[$i]['cell'];
+            if (strtotime($data[$i]['curr_iss_amt']) > 10) {
+                $curr_iss_amt[] = $data[$i];
             }
-
             // 标注持仓可转债
-            if (in_array($data[$i]['id'], $owner)) {
-                $owner_bond[] = $data[$i]['cell'];
+            if (in_array($data[$i]['bond_id'], $owner)) {
+                $owner_bond[] = $data[$i];
             }
-
-            $return[] = $data[$i]['cell'];
+            // 双低前10%中,排除溢价率大于15%、价格不在105~115之间
+            if (intval($data[$i]['premium_rt']) < 15 && $data[$i]['price'] > 105 && $data[$i]['price'] < 115) {
+                $return[] = $data[$i];
+            }
         }
 
         for ($i = 0; $i < $sale; $i++) {
             // 标注持仓可转债
-            $key = array_search($data[$i]['id'], $owner);
+            $key = array_search($data[$i]['bond_id'], $owner);
             if (is_numeric($key)) {
                 unset($owner[$key]);
             }
@@ -149,8 +148,8 @@ class KzzService implements KzzContract
 
         // 获取 跌出前20%的 已持有 可转债
         foreach ($data as $v) {
-            if (in_array($v['id'], $owner)) {
-                $about_to_sale[] = $v['cell'];
+            if (in_array($v['bond_id'], $owner)) {
+                $about_to_sale[] = $v;
             }
         }
 
@@ -292,14 +291,14 @@ class KzzService implements KzzContract
     private function getStr($arr, $type = 'buy')
     {
         $return = '';
-        $buy    = '债券名称&nbsp;申购代码&nbsp;申购日期&nbsp;申购建议&nbsp;   
+        $buy    = '债券名称&nbsp;申购代码&nbsp;申购日期&nbsp;   
         ';
         $sale   = '债券名称&nbsp;债券代码&nbsp;正股代码&nbsp;上市日期&nbsp;   
         ';
         if (!empty($arr)) {
             foreach ($arr as $v) {
                 if ($type == 'buy') {
-                    $return .= $v['bond_nm'] . '&nbsp;' . $v['apply_cd'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['apply_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['jsl_advise_text'] ?: '暂无' . '&nbsp;  
+                    $return .= $v['bond_nm'] . '&nbsp;' . $v['apply_cd'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['apply_date'], 'm-d') . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;  
             ';
                 } elseif ($type == 'sale') {
                     $return .= $v['bond_nm'] . '&nbsp;' . $v['bond_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' . $v['stock_id'] . '&nbsp;&nbsp;&nbsp;&nbsp;' . change_date_format($v['list_date'], 'm-d') . '&nbsp;  

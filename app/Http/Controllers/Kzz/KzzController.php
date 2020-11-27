@@ -32,7 +32,7 @@ class KzzController extends Controller
         $headers = ['cookie' => config('kzz.header_auth')];
 
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl', 'post', $params, $headers);
+        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params, $headers);
 
         $is_notice = $params['notice_only'] ?? 0;
 

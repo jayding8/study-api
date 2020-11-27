@@ -57,7 +57,7 @@ class LowRiskStrategy extends Command
             'btype'     => 'C',
         ];
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl', 'post', $params);
+        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params);
         // 过滤返回值
         $data_effective = $this->kzzContract->filterLowRiskData($data, self::NOTICE);
         // 组装数据
