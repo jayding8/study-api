@@ -10,6 +10,13 @@ use Illuminate\Support\Arr;
 
 class KzzService implements KzzContract
 {
+    // 双低阀值
+    const DBLOW = 130;
+    // 告警双低平均值
+    const DBLOW_AVG_WARN = 165;
+    // 清仓双低平均值
+    const DBLOW_AVG_FATAL = 170;
+
     // 通知地址
     public $webhook;
     // 数据来源
@@ -79,9 +86,13 @@ class KzzService implements KzzContract
      *
      * 双低计算方式:可转债价格和溢价率*100进行相加，值越小排名越排前
      *
-     * 1、去除 已发强赎、1年内到期的可转债,按照双低正序排,计划取 前10% 的可转债作为底仓
-     * 2、持有转债跌出 20% 后直接卖出
-     * 3、待定
+     * 1、去除 已发强赎、1年内到期的可转债,按照双低正序排
+     * 2、双底均值大于170 或者 双低值130以下的转债消失,提示清仓可转债
+     * 3、脉冲调仓:
+     *      a、要有阈值,需比新标的双低值大10以上
+     *      b、中位价格小于110元，则要求价格120元以上，且双低值125以上。
+     *      c、中位价格大于110元，则要求价格125元以上，且双低值130以上。
+     * 4、空仓建仓:双低值小于160，仓位30%；双低值小于155，仓位60%；双低值小于150，仓位100%。
      */
     public function filterLowRiskData($data, $is_notice)
     {
@@ -110,56 +121,62 @@ class KzzService implements KzzContract
             }
             return $data;
         }
-        // 获取可转债总数,取 前10% 作为舱底
+
+        // 过滤可交换债 btype: C-可转债 E-可交换债
+        // 过滤一年内到期: maturity_dt
+        $data = array_filter($data, function ($item) {
+            if ($item['btype'] == 'C' && (time() + 365 * 24 * 3600 < strtotime($item['maturity_dt'])))
+                return true;
+            return false;
+        });
+        // 获取可转债总数,判断双底平均值
         $count = count($data);
-        $buy   = intval($count / 10);
-        $sale  = intval($count / 5);
+        $avg   = array_sum(array_column($data, 'dblow')) / $count;
+        if ($avg > self::DBLOW_AVG_FATAL || (isset($data[0], $data[0]['dblow']) && $data[0]['dblow'] > self::DBLOW)) {
+            // 双底均值大于170 或者 双低值130以下的转债消失,提示清仓可转债
+            $fatal = ['avg' => $avg, 'dblow' => $data[0]['dblow']];
+        } elseif ($avg > self::DBLOW_AVG_WARN) {
+            // 双底均值大于165,提示减仓
+            $warning = ['avg' => $avg, 'dblow' => $data[0]['dblow']];
+        }
+        // 脉冲调仓
+        $middle = intval($count / 2);
+        if ($data[$middle]['price'] > 110) {
+            $sale_price = 125;
+            $sale_dblow = 130;
+        } else {
+            $sale_price = 120;
+            $sale_dblow = 125;
+        }
         // 获取我自己的自选列表
         $owner = Logs::condition(['op_id' => 2, 'user_id' => 1])->pluck('type')->toArray();
 
-        $return          = [];
-        $about_to_expire = $owner_bond = $about_to_sale = $curr_iss_amt = [];
-        for ($i = 0; $i < $buy; $i++) {
-            // 标注 1年内到期 的可转债
-            if (strtotime($data[$i]['maturity_dt']) < time() + 365 * 24 * 3600) {
-                $about_to_expire[] = $data[$i];
-            }
-            // 剩余规模大于10亿
-            if (strtotime($data[$i]['curr_iss_amt']) > 10) {
-                $curr_iss_amt[] = $data[$i];
-            }
-            // 标注持仓可转债
-            if (in_array($data[$i]['bond_id'], $owner)) {
-                $owner_bond[] = $data[$i];
-            }
-            // 双低前10%中,排除溢价率大于15%、价格不在105~115之间
-            if (intval($data[$i]['premium_rt']) < 15 && $data[$i]['price'] > 105 && $data[$i]['price'] < 115) {
-                $return[] = $data[$i];
+        $owner_bond = $about_to_buy = $about_to_sale = [];
+        foreach ($data as $item) {
+            if (in_array($item['bond_id'], $owner)) {
+                if ($item['price'] > $sale_price && $item['dblow'] > $sale_dblow) {
+                    $about_to_sale[] = $item;
+                }
+                $owner_bond[] = $item;
+            } else {
+                $about_to_buy[] = $item;
             }
         }
+//            // 剩余规模大于10亿
+//            if ($data[$i]['curr_iss_amt'] > 10) {
+//                $curr_iss_amt[] = $data[$i];
+//            }
 
-        for ($i = 0; $i < $sale; $i++) {
-            // 标注持仓可转债
-            $key = array_search($data[$i]['bond_id'], $owner);
-            if (is_numeric($key)) {
-                unset($owner[$key]);
-            }
-        }
-
-        // 获取 跌出前20%的 已持有 可转债
-        foreach ($data as $v) {
-            if (in_array($v['bond_id'], $owner)) {
-                $about_to_sale[] = $v;
-            }
-        }
-
-        return [
-            'return'          => $return,
-            'about_to_expire' => $about_to_expire,
-            'owner_bond'      => $owner_bond,
-            'about_to_sale'   => $about_to_sale,
-            'curr_iss_amt'    => $curr_iss_amt,
+        $return = [
+            'owner_bond' => $owner_bond,
+            'fatal'      => $fatal ?? [],
+            'warning'    => $warning ?? [],
         ];
+        if (!empty($about_to_sale)) {
+            $return['about_to_sale'] = $about_to_sale;
+            $return['about_to_buy']  = array_slice($about_to_buy, 0, 10);
+        }
+        return $return;
     }
 
     /**
@@ -230,23 +247,28 @@ class KzzService implements KzzContract
      */
     public function getlowRiskStrategyData($data_effective)
     {
-        $return          = $this->getStrJsl($data_effective['return']);
-        $about_to_expire = $this->getStrJsl($data_effective['about_to_expire']);
-        $owner_bond      = $this->getStrJsl($data_effective['owner_bond']);
-        $about_to_sale   = $this->getStrJsl($data_effective['about_to_sale']);
-        $curr_iss_amt    = $this->getStrJsl($data_effective['curr_iss_amt']);
+        if ($data_effective['fatal']) {
+            $text = "【转债快报】" . PHP_EOL .
+                "双低均值: " . $data_effective['avg'] . PHP_EOL .
+                "最小双低: " . $data_effective['dblow'] . PHP_EOL .
+                "建议清仓可转债!!!";
+        } else {
+            $text = "【转债快报】" . PHP_EOL;
+            if ($data_effective['warning']) {
+                $text .= "双低均值: " . $data_effective['avg'] . PHP_EOL .
+                    "建议减仓!!!" . PHP_EOL . PHP_EOL;
+            }
+            if (isset($data_effective['about_to_sale'])) {
+                $about_to_sale = $this->getStrJsl($data_effective['about_to_sale']);
+                $about_to_buy  = $this->getStrJsl($data_effective['about_to_buy']);
 
-        $text = "【转债快报】" . PHP_EOL .
-            "今日 前10% 推荐: " . PHP_EOL .
-            $return . PHP_EOL .
-            "一年内即将到期: " . PHP_EOL .
-            $about_to_expire . PHP_EOL .
-            "已拥有: " . PHP_EOL .
-            $owner_bond . PHP_EOL .
-            "推荐卖出: " . PHP_EOL .
-            $about_to_sale . PHP_EOL .
-            "剩余规模大于10亿: " . PHP_EOL .
-            $curr_iss_amt;
+                $text .= "推荐卖出: " . PHP_EOL .
+                    $about_to_sale . PHP_EOL .
+                    "推荐买入: " . PHP_EOL .
+                    $about_to_buy;
+            }
+        }
+
 
         $at = [
             "atMobiles" => ["15251895379"],

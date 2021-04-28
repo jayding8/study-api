@@ -50,16 +50,13 @@ class LowRiskStrategy extends Command
      */
     public function handle()
     {
-        $params = [
-            'is_search' => 'Y',
-            'rp'        => '50',
-            'listed'    => 'Y',
-            'btype'     => 'C',
-        ];
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params);
+        $data = $this->kzzContract->getSourceData('jsl_new', 'post');
         // 过滤返回值
         $data_effective = $this->kzzContract->filterLowRiskData($data, self::NOTICE);
+        if (!$data_effective['fatal'] && !$data_effective['warning'] && !isset($data_effective['about_to_sale'])) {
+            return false;
+        }
         // 组装数据
         $notice_data = $this->kzzContract->getlowRiskStrategyData($data_effective);
         // 发送数据
