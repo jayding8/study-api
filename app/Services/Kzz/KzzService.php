@@ -16,6 +16,8 @@ class KzzService implements KzzContract
     const DBLOW_AVG_WARN = 165;
     // 清仓双低平均值
     const DBLOW_AVG_FATAL = 170;
+    // 单日涨幅阈值
+    const PULSE = 10;
 
     // 通知地址
     public $webhook;
@@ -154,7 +156,8 @@ class KzzService implements KzzContract
         $owner_bond = $about_to_buy = $about_to_sale = [];
         foreach ($data as $item) {
             if (in_array($item['bond_id'], $owner)) {
-                if ($item['price'] > $sale_price && $item['dblow'] > $sale_dblow) {
+                // 单价异常暴涨 或者 单价和双低都满足条件时,卖出
+                if ($item['increase_rt'] > self::PULSE || ($item['price'] > $sale_price && $item['dblow'] > $sale_dblow)) {
                     $about_to_sale[] = $item;
                 }
                 $owner_bond[] = $item;

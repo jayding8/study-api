@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Contracts\KzzContract;
 use Illuminate\Console\Command;
+use App\Services\Third\HolidayService;
 
 class LowRiskStrategy extends Command
 {
@@ -23,17 +24,18 @@ class LowRiskStrategy extends Command
      */
     protected $description = 'send lowRiskStrategy notice to dingtalk';
 
-    public $kzzContract;
+    public $kzzContract, $holidayService;
 
     /**
      * Create a new command instance.
      *
      * @return void
      */
-    public function __construct(KzzContract $kzzContract)
+    public function __construct(KzzContract $kzzContract, HolidayService $holidayService)
     {
         parent::__construct();
-        $this->kzzContract = $kzzContract;
+        $this->kzzContract    = $kzzContract;
+        $this->holidayService = $holidayService;
     }
 
     /**
@@ -50,8 +52,14 @@ class LowRiskStrategy extends Command
      */
     public function handle()
     {
+        // 校验是否是法定工作日
+        if (!$this->holidayService->check()) {
+//            logger('notice-holiday-check:', ['today is holiday / weekend']);
+            $this->error('today is holiday / weekend');
+            return false;
+        }
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl_new', 'post');
+        $data = $this->kzzContract->getSourceData('jsl_new');
         // 过滤返回值
         $data_effective = $this->kzzContract->filterLowRiskData($data, self::NOTICE);
         if (!$data_effective['fatal'] && !$data_effective['warning'] && !isset($data_effective['about_to_sale'])) {

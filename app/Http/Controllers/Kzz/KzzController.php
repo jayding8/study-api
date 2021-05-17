@@ -29,10 +29,9 @@ class KzzController extends Controller
     public function lowRiskStrategy()
     {
         $params  = request()->all();
-        $headers = ['cookie' => config('kzz.header_auth')];
 
         // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params, $headers);
+        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params);
 
         $is_notice = $params['notice_only'] ?? 0;
 
