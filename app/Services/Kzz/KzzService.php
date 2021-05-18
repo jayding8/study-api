@@ -131,6 +131,7 @@ class KzzService implements KzzContract
                 return true;
             return false;
         });
+        $data = array_values($data);
         // 获取可转债总数,判断双底平均值
         $count = count($data);
         $avg   = array_sum(array_column($data, 'dblow')) / $count;
