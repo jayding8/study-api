@@ -98,11 +98,11 @@ class KzzService implements KzzContract
      */
     public function filterLowRiskData($data, $is_notice)
     {
-        // 按照 双低 asc排序
-        $data = array_values(Arr::sort($data['data'], function ($val) {
-            return $val['dblow'];
-        }));
         if (!$is_notice) {
+            // 按照 双低 asc排序
+            $data = array_values(Arr::sort($data['data'], function ($val) {
+                return $val['dblow'];
+            }));
             // 如果已登录,判断当前用户是否持有
             if (auth()->check()) {
                 // 自选
@@ -124,6 +124,10 @@ class KzzService implements KzzContract
             return $data;
         }
 
+        // 按照 双低 asc排序
+        $data = array_values(Arr::sort($data['data'], function ($val) {
+            return $val['price'];
+        }));
         // 过滤可交换债 btype: C-可转债 E-可交换债
         // 过滤一年内到期: maturity_dt
         $data = array_filter($data, function ($item) {
