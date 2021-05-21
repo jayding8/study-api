@@ -257,13 +257,13 @@ class KzzService implements KzzContract
     {
         if ($data_effective['fatal']) {
             $text = "【转债快报】" . PHP_EOL .
-                "双低均值: " . $data_effective['avg'] . PHP_EOL .
-                "最小双低: " . $data_effective['dblow'] . PHP_EOL .
+                "双低均值: " . $data_effective['fatal']['avg'] . PHP_EOL .
+                "最小双低: " . $data_effective['fatal']['dblow'] . PHP_EOL .
                 "建议清仓可转债!!!";
         } else {
             $text = "【转债快报】" . PHP_EOL;
             if ($data_effective['warning']) {
-                $text .= "双低均值: " . $data_effective['avg'] . PHP_EOL .
+                $text .= "双低均值: " . $data_effective['warning']['avg'] . PHP_EOL .
                     "建议减仓!!!" . PHP_EOL . PHP_EOL;
             }
             if (isset($data_effective['about_to_sale'])) {
