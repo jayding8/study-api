@@ -98,11 +98,27 @@ class KzzService implements KzzContract
      */
     public function filterLowRiskData($data, $is_notice)
     {
+        $data = $data['data'];
+        $data = array_filter($data, function ($item) {
+            // 过滤可交换债 btype: C-可转债 E-可交换债
+            if ($item['btype'] != 'C')
+                return false;
+            // 过滤一年内到期: maturity_dt
+            if (time() + 365 * 24 * 3600 > strtotime($item['maturity_dt']))
+                return false;
+            // 过滤未上市的可转债
+            if ($item['last_time'] === null)
+                return false;
+            return true;
+        });
+        $data = array_values($data);
+
+        // 按照 双低 asc排序
+        $data_dblow = array_values(Arr::sort($data, function ($val) {
+            return $val['dblow'];
+        }));
+
         if (!$is_notice) {
-            // 按照 双低 asc排序
-            $data = array_values(Arr::sort($data['data'], function ($val) {
-                return $val['dblow'];
-            }));
             // 如果已登录,判断当前用户是否持有
             if (auth()->check()) {
                 // 自选
@@ -125,30 +141,23 @@ class KzzService implements KzzContract
         }
 
         // 按照 双低 asc排序
-        $data = array_values(Arr::sort($data['data'], function ($val) {
+        $data_price = array_values(Arr::sort($data, function ($val) {
             return $val['price'];
         }));
-        // 过滤可交换债 btype: C-可转债 E-可交换债
-        // 过滤一年内到期: maturity_dt
-        $data = array_filter($data, function ($item) {
-            if ($item['btype'] == 'C' && (time() + 365 * 24 * 3600 < strtotime($item['maturity_dt'])))
-                return true;
-            return false;
-        });
-        $data = array_values($data);
+
         // 获取可转债总数,判断双底平均值
         $count = count($data);
         $avg   = array_sum(array_column($data, 'dblow')) / $count;
-        if ($avg > self::DBLOW_AVG_FATAL || (isset($data[0], $data[0]['dblow']) && $data[0]['dblow'] > self::DBLOW)) {
+        if ($avg > self::DBLOW_AVG_FATAL || (isset($data_dblow[0], $data_dblow[0]['dblow']) && $data_dblow[0]['dblow'] > self::DBLOW)) {
             // 双底均值大于170 或者 双低值130以下的转债消失,提示清仓可转债
-            $fatal = ['avg' => $avg, 'dblow' => $data[0]['dblow']];
+            $fatal = ['avg' => $avg, 'dblow' => $data_dblow[0]['dblow']];
         } elseif ($avg > self::DBLOW_AVG_WARN) {
             // 双底均值大于165,提示减仓
-            $warning = ['avg' => $avg, 'dblow' => $data[0]['dblow']];
+            $warning = ['avg' => $avg, 'dblow' => $data_dblow[0]['dblow']];
         }
         // 脉冲调仓
         $middle = intval($count / 2);
-        if ($data[$middle]['price'] > 110) {
+        if ($data_price[$middle]['price'] > 110) {
             $sale_price = 125;
             $sale_dblow = 130;
         } else {
@@ -159,7 +168,7 @@ class KzzService implements KzzContract
         $owner = Logs::condition(['op_id' => 2, 'user_id' => 1])->pluck('type')->toArray();
 
         $owner_bond = $about_to_buy = $about_to_sale = [];
-        foreach ($data as $item) {
+        foreach ($data_dblow as $item) {
             if (in_array($item['bond_id'], $owner)) {
                 // 单价异常暴涨 或者 单价和双低都满足条件时,卖出
                 if ($item['increase_rt'] > self::PULSE || ($item['price'] > $sale_price && $item['dblow'] > $sale_dblow)) {
