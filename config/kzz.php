@@ -12,8 +12,10 @@ return [
 
     // 同花顺数据中心 http://data.10jqka.com.cn/ipo/bond/
     'source_data'      => [
-        'ths' => env('KZZ_SOURCE_DATA', 'http://data.10jqka.com.cn/ipo/kzz/'),
-        'jsl' => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=' . intval(microtime(1) * 1000)),
+        'ths'        => env('KZZ_SOURCE_DATA', 'http://data.10jqka.com.cn/ipo/kzz/'),
+        'jsl'        => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=' . intval(microtime(1) * 1000)),
+        'jsl_new'    => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/webapi/cb/list/'),
+        'jsl_coming' => env('JSL_COMING_DATA', 'https://www.jisilu.cn/webapi/cb/pre/?history=N'),
     ],
 
     // 默认索引图
@@ -24,4 +26,12 @@ return [
 
     // 持仓可转债
     'owner'            => [110058, 123045, 128025, 128082, 128110],
+
+    // 操作类型备份
+    'op'               => [
+        ['op_id' => 1, 'op_name' => '中签', 'key' => 'user_codes'],
+        ['op_id' => 2, 'op_name' => '自选', 'key' => 'user_optional'],
+        ['op_id' => 3, 'op_name' => '黑名单', 'key' => 'user_black'],
+        ['op_id' => 4, 'op_name' => '预警', 'key' => 'user_warning'],
+    ]
 ];

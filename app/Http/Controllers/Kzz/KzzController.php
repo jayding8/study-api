@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Kzz;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 use App\Contracts\KzzContract;
@@ -17,29 +18,6 @@ class KzzController extends Controller
     }
 
     /**
-     * 可申请、即将申请、新上市、即将上市 可转债
-     */
-    public function notice()
-    {
-        // 获取第三方可转债数据
-        $data = $this->kzzContract->getSourceData('ths');
-
-        if (!$data)
-            return false;
-
-        // 过滤返回值,只取待申请,待上市数据
-        $data_effective = $this->kzzContract->filterData($data);
-
-        // 发送数据
-        $return = $this->kzzContract->sendNotice($data_effective);
-        if ($return['errcode']) {
-            logger($return);
-            return Response::error($return['errcode'], $return['errmsg']);
-        }
-        return Response::success($return);
-    }
-
-    /**
      * 低风险策略(策略原贴:https://www.jisilu.cn/question/273614)
      * 双低计算方式:可转债价格和溢价率*100进行相加，值越小排名越排前
      *
@@ -51,24 +29,37 @@ class KzzController extends Controller
     public function lowRiskStrategy()
     {
         $params  = request()->all();
+
+        // 获取第三方可转债数据
+        $data = $this->kzzContract->getSourceData('jsl_new', 'post', $params);
+
+        $is_notice = $params['notice_only'] ?? 0;
+
+        // 过滤返回值
+        $data_effective = $this->kzzContract->filterLowRiskData($data, intval($is_notice));
+
+        return Response::success($data_effective);
+    }
+
+    public function strategy()
+    {
+        $params  = request()->all();
         $headers = ['cookie' => config('kzz.header_auth')];
 
         // 获取第三方可转债数据
         $data = $this->kzzContract->getSourceData('jsl', 'post', $params, $headers);
 
+        $is_notice = $params['notice_only'] ?? 0;
+
         // 过滤返回值
-        $data_effective = $this->kzzContract->filterLowRiskData($data);
-
-        return Response::success($data_effective);
-
-        // 发送数据
-        $return = $this->kzzContract->sendNotice($data_effective,'text');
-        if ($return['errcode']) {
-            logger($return);
-            return Response::error($return['errcode'], $return['errmsg']);
+        $data_effective = $this->kzzContract->filterLowRiskData($data, intval($is_notice));
+        $return         = [];
+        foreach ($data_effective as $v) {
+            if ($v['price'] + 1 < $v['convert_value'] && is_numeric($v['convert_cd'])) {
+                $return[] = Arr::only($v, ['bond_id', 'bond_nm', 'price', 'convert_value']);
+            }
         }
-
-        return Response::success($data_effective);
+        return Response::success($return);
     }
 }
 

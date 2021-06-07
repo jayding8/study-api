@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8503fc2dd5a87b658a07dfd9f2369e3d",
+    "content-hash": "32c14d7c61e46d53d1bdbea430068b48",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -774,6 +774,52 @@
                 "url"
             ],
             "time": "2019-07-01T23:21:34+00:00"
+        },
+        {
+            "name": "jayding/chinese-holiday",
+            "version": "1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jayding8/chinese-holiday.git",
+                "reference": "b470aeae81b8002351dd6937aaff9a9e7690d959"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jayding8/chinese-holiday/zipball/b470aeae81b8002351dd6937aaff9a9e7690d959",
+                "reference": "b470aeae81b8002351dd6937aaff9a9e7690d959",
+                "shasum": "",
+                "mirrors": [
+                    {
+                        "url": "https://mirrors.aliyun.com/composer/dists/%package%/%reference%.%type%",
+                        "preferred": true
+                    }
+                ]
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.0.0",
+                "php": "^7.0"
+            },
+            "require-dev": {
+                "php": "^7.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Holiday\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "jayding",
+                    "email": "348058841@qq.com"
+                }
+            ],
+            "description": "check whether it is a working day",
+            "time": "2020-12-09T01:42:55+00:00"
         },
         {
             "name": "laravel/framework",
@@ -4252,6 +4298,7 @@
                 "faker",
                 "fixtures"
             ],
+            "abandoned": true,
             "time": "2019-12-12T13:22:17+00:00"
         },
         {
@@ -5138,6 +5185,7 @@
             "keywords": [
                 "tokenizer"
             ],
+            "abandoned": true,
             "time": "2019-09-17T06:23:10+00:00"
         },
         {

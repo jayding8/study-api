@@ -15,27 +15,27 @@ use Illuminate\Support\Facades\Route;
 
 // 用户 路由
 Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
+    // 用户注册
     Route::post('register', 'UserController@register');
+    // 用户登录
     Route::post('login', 'UserController@login');
 });
 
 // 日志 路由
 Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
     Route::group(['middleware' => 'auth'], function () {
-        Route::post('log', 'LogsController@create');    // 新增操作记录
-        Route::get('logs', 'LogsController@list');      // 获取日志列表
+        // 新增操作记录
+        Route::post('log', 'LogsController@create');
+        // 删除日志记录
+        Route::delete('log', 'LogsController@delete');
+        // 获取日志记录
+        Route::get('log', 'LogsController@logs');
     });
-});
-
-// 数字货币 路由
-Route::group(['prefix' => 'szhb', 'namespace' => 'Szhb'], function () {
-    Route::post('log', 'SzhbController@create');    // 新增记录
-    Route::get('logs', 'SzhbController@lists');      // 获取日志列表
 });
 
 // 可转债 路由
 Route::group(['prefix' => 'kzz', 'namespace' => 'Kzz'], function () {
-    Route::get('kzz', 'KzzController@notice');
     Route::get('lowRiskKzz', 'KzzController@lowRiskStrategy');
+    Route::get('strategy', 'KzzController@strategy');
 });
 
