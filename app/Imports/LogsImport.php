@@ -21,6 +21,7 @@ class LogsImport implements ToCollection
 
     public function collection(Collection $collections)
     {
+        $owner = [];
         foreach ($collections as $collection) {
             if (!is_numeric($collection[1])) {
                 continue;
@@ -36,6 +37,13 @@ class LogsImport implements ToCollection
                 'type_name' => $collection[0],
             ];
             Logs::updateOrCreate($search, array_merge($search, $other));
+            $owner[] = intval(trim($collection[1]));
+        }
+        $all  = Logs::self()->condition(['op_id' => $this->op_id])->pluck('type')->toArray();
+        $diff = array_diff($all, $owner);
+//        logger([$all, $owner, $diff]);
+        if (!empty($diff)) {
+            Logs::condition(['types' => $diff])->delete();
         }
     }
 }
