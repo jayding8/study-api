@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Logs;
 
 use App\Http\Controllers\Controller;
+use App\Imports\LogsImport;
 use App\Models\Logs\Logs;
 use App\Models\User\UserWarning;
+use App\Services\Third\ExcelService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +15,15 @@ use Illuminate\Support\Facades\Validator;
 
 class LogsController extends Controller
 {
-    private $op_types;
+    const OP_ID = 2;
 
-    public function __construct()
+    private $op_types, $excelService, $excel_types;
+
+    public function __construct(ExcelService $excelService)
     {
-        $this->op_types = config('kzz.op');
+        $this->excelService = $excelService;
+        $this->excel_types  = config('kzz.excel');
+        $this->op_types     = config('kzz.op');
     }
 
     public function create(Request $request)
@@ -100,5 +106,26 @@ class LogsController extends Controller
             $return[$ops[$log['op_id']]][] = $log;
         }
         return response()->success($return);
+    }
+
+    public function importExcele()
+    {
+        if (!$file = request()->file('file')) {
+            return response()->error(1000, 'NO FILE');
+        }
+
+        $extension = $file->getClientOriginalExtension();
+        if (!in_array($extension, $this->excel_types)) {
+            return response()->error(1001, 'ERROR TYPE: ' . $extension);
+        }
+
+        $op_id   = request('op_id') ?? self::OP_ID;
+        $op_name = Arr::pluck($this->op_types, 'op_name', 'op_id')[$op_id];
+        $params  = [
+            'op_id'   => $op_id,
+            'op_name' => $op_name,
+        ];
+        $ret     = $this->excelService->importExcele(new LogsImport($params), $file);
+        return response()->success($ret ? 'success' : 'error');
     }
 }

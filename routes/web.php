@@ -30,6 +30,8 @@ Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
         Route::delete('log', 'LogsController@delete');
         // 获取日志记录
         Route::get('log', 'LogsController@logs');
+        // 第三方数据导入
+        Route::post('excel/import', 'LogsController@importExcele');
     });
 });
 
