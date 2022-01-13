@@ -19,6 +19,7 @@ Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
     Route::post('register', 'UserController@register');
     // 用户登录
     Route::post('login', 'UserController@login');
+    Route::get('users', 'UserController@list');
 });
 
 // 日志 路由
