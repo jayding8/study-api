@@ -33,5 +33,7 @@ return [
         ['op_id' => 2, 'op_name' => '自选', 'key' => 'user_optional'],
         ['op_id' => 3, 'op_name' => '黑名单', 'key' => 'user_black'],
         ['op_id' => 4, 'op_name' => '预警', 'key' => 'user_warning'],
-    ]
+    ],
+
+    'excel' => ['xlsx'],
 ];

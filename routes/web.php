@@ -19,6 +19,7 @@ Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
     Route::post('register', 'UserController@register');
     // 用户登录
     Route::post('login', 'UserController@login');
+    Route::get('users', 'UserController@list');
 });
 
 // 日志 路由
@@ -30,6 +31,8 @@ Route::group(['prefix' => 'logs', 'namespace' => 'Logs'], function () {
         Route::delete('log', 'LogsController@delete');
         // 获取日志记录
         Route::get('log', 'LogsController@logs');
+        // 第三方数据导入
+        Route::post('excel/import', 'LogsController@importExcele');
     });
 });
 
