@@ -27,6 +27,7 @@ class Kernel extends ConsoleKernel
     {
         $schedule->command('send:notice')->dailyAt('9:15');
         $schedule->command('send:lrs')->everyMinute()->between('9:30', '15:00');
+        $schedule->command('send:yifeng')->everyMinute();
     }
 
     /**

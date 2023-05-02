@@ -16,6 +16,7 @@ return [
         'jsl'        => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/data/cbnew/cb_list/?___jsl=LST___t=' . intval(microtime(1) * 1000)),
         'jsl_new'    => env('JSL_SOURCE_DATA', 'https://www.jisilu.cn/webapi/cb/list/'),
         'jsl_coming' => env('JSL_COMING_DATA', 'https://www.jisilu.cn/webapi/cb/pre/?history=N'),
+        'yifeng'     => env('YI_FENG', 'https://mall-api.xwindlab.com/goods/queryGoodsDetail'),
     ],
 
     // 默认索引图

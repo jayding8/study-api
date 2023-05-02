@@ -45,13 +45,23 @@ class KzzService implements KzzContract
     /**
      * 获取第三方可转债数据
      */
-    public function getSourceData($source, $type = 'get', $params = [], $headers = [])
+    public function getSourceData($source, $type = 'get', $params = [], $headers = [], $data_type = 'form')
     {
 //        dd($this->source_data);
         if ($type == 'post') {
-            return Http::withHeaders($headers)->asForm()->post($this->source_data[$source], $params)->throw()->json();
+            switch ($data_type) {
+                case 'form':
+                    return Http::withHeaders($headers)->asForm()->post($this->source_data[$source], $params)->throw()->json();
+                    break;
+                case 'json':
+                    return Http::withHeaders($headers)->asJson()->post($this->source_data[$source], $params)->throw()->json();
+                    break;
+                default:
+                    # code...
+                    break;
+            }
         }
-        return Http::get($this->source_data[$source], $params)->throw()->json();
+        return Http::withHeaders(['init' => 1, 'cookie' => config('kzz.header_auth'), 'columns' => '1,70,2,3,5,6,11,12,14,15,16,29,30,32,34,35,75,44,46,47,52,53,54,56,57,58,59,60,61,62,76,63,67'])->get($this->source_data[$source], $params)->throw()->json();
     }
 
     /**
@@ -222,6 +232,18 @@ class KzzService implements KzzContract
                         "content" => $data_effective['text'],
                     ],
                     "at"      => $data_effective['at']
+                ];
+                break;
+            case 'yifeng':
+                $data = [
+                    'msgtype'    => 'text',
+                    'text'       => [
+                        "content" => "【巽风快报】" . PHP_EOL . "盛世玉兰7头茶具上新了"
+                    ],
+                    "at"      => [
+                        "atMobiles" => ["15862034036"],
+                        "isAtAll"   => false
+                    ]
                 ];
                 break;
             default:
